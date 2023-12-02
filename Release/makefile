@@ -17,7 +17,7 @@ $(GEN_CMDS__FLAG) \
 
 -include ../makefile.init
 
-RM := DEL /F
+RM := 
 RMDIR := RMDIR /S/Q
 
 # All of the sources participating in the build are defined here
@@ -120,21 +120,21 @@ endif
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXE_OUTPUTS += \
-sensor-node-bus-fw-main.out \
+sensormeasure.out \
 
 EXE_OUTPUTS__QUOTED += \
-"sensor-node-bus-fw-main.out" \
+"sensormeasure.out" \
 
 
 # All Target
 all: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
-	@$(MAKE) --no-print-directory -Onone "sensor-node-bus-fw-main.out"
+	@$(MAKE) --no-print-directory -Onone "sensormeasure.out"
 
 # Tool invocations
-sensor-node-bus-fw-main.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
+sensormeasure.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: MSP430 Linker'
-	"C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/bin/cl430" -vmsp -O2 --use_hw_mpy=none --advice:power=all --define=__MSP430G2553__ --printf_support=minimal --diag_warning=225 --diag_wrap=off --display_error_number -z -m"sensor-node-bus-fw-main.map" --heap_size=80 --stack_size=80 -i"C:/ti/ccs1250/ccs/ccs_base/msp430/include" -i"C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/lib" -i"C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="sensor-node-bus-fw-main_linkInfo.xml" --use_hw_mpy=none --rom_model -o "sensor-node-bus-fw-main.out" $(ORDERED_OBJS)
+	"" -vmsp -O2 --use_hw_mpy=none --advice:power=all --define=__MSP430G2553__ --printf_support=minimal --diag_warning=225 --diag_wrap=off --display_error_number -z -m"sensormeasure.map" --heap_size=80 --stack_size=80 -i"/msp430/include" -i"C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/lib" -i"C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="sensormeasure_linkInfo.xml" --use_hw_mpy=none --rom_model -o "sensormeasure.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 

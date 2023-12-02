@@ -26,6 +26,7 @@
 #include"bno055_basic.h"
 #include"uart_support.h"
 
+#define LINACCEL
 /* Defines */
 #define GROUP_ID                0xBA
 #define DEVICES_IN_GROUP        26
@@ -68,6 +69,15 @@ uint16_t accelz;
 
 uint8_t byte;
 
+void formatAccelData(char* output, const uint8_t* accel_buffer) {
+    int i;
+    for (i = 0; i < 6; ++i) {
+        *output++ = "0123456789ABCDEF"[accel_buffer[i] >> 4];
+        *output++ = "0123456789ABCDEF"[accel_buffer[i] & 0xF];
+    }
+    *output = '\n'; // Null-terminate the string
+}
+
 /* Main */
 int main(void) {
 
@@ -80,20 +90,23 @@ int main(void) {
     P1SEL2|= BIT2;
     while(1)
     {
-        uint16_t msg_crc16;
-        uint8_t k;
+//        uint16_t msg_crc16;
+//        uint8_t k;
 
 
         TA1CCR0   = 19999;               // In UP mode interrupt frequency = 16/8/(19999+1) [MHz] = 0.1kHz (10ms)
         //RECEIVE DATA HERE:
+#ifndef LINACCEL
         // Assuming accel_buffer contains raw acceleration data
         bno_i2c_read(BNO055_ACCEL_DATA_X_LSB_ADDR, accel_buffer, 6);
-
+#else
+        bno_i2c_read(BNO055_LINEAR_ACCEL_DATA_X_LSB_ADDR, accel_buffer, 6);
+#endif
         // Convert raw acceleration values to ASCII strings
         int accelx = (accel_buffer[1] << 8) | accel_buffer[0];
         int accely = (accel_buffer[3] << 8) | accel_buffer[2];
         int accelz = (accel_buffer[5] << 8) | accel_buffer[4];
-
+/*
         char accelx_str[10];  // Adjust the size based on your needs
         char accely_str[10];
         char accelz_str[10];
@@ -102,13 +115,22 @@ int main(void) {
         sprintf(accelx_str, "%d\0", accelx);
         sprintf(accely_str, "%d\0", accely);
         sprintf(accelz_str, "%d\0", accelz);
-        int i;
+
         // Send the ASCII strings over UART
         for (i = 0; accelx_str[i] != '\0'; i++) {
             while (!(IFG2 & UCA0TXIFG));
             UCA0TXBUF = accelx_str[i];
         }
-
+*/
+        int i;
+        char output[13];
+        formatAccelData(output, accel_buffer);
+        //send acceleration values as binary data over UART
+        for (i = 0; i < 13; i++) {
+            while (!(IFG2 & UCA0TXIFG));
+            UCA0TXBUF = output[i];
+        }
+/*
         while (!(IFG2 & UCA0TXIFG));  // Wait for the UART buffer to be ready
         UCA0TXBUF = ' ';  // Add a space between x, y, and z values
 
@@ -124,14 +146,14 @@ int main(void) {
             while (!(IFG2 & UCA0TXIFG));
             UCA0TXBUF = accelz_str[i];
         }
-
         // Add newline characters or any other formatting as needed
         while (!(IFG2 & UCA0TXIFG));
         UCA0TXBUF = '\r';
 
         while (!(IFG2 & UCA0TXIFG));
         UCA0TXBUF = '\n';
-
+*/
+        _delay_cycles(10000);//1ms delay
     }
 }
 
@@ -236,6 +258,7 @@ static void bno_i2c_read(uint8_t reg_addr, uint8_t* data, uint8_t size){
     data[k] = UCB0RXBUF;
     while(UCB0CTL1 & UCTXSTP);      // Poll til previous data transfer is completed
     UCB0CTL1 |= UCSWRST;
+
 }
 
 
@@ -302,10 +325,15 @@ static void reset_init_config_bno055(void){
         // Reset default page.
         bno055_active_page = 0;
         // Write operation mode in to sensor. Default after POR is configuration mode
+#ifndef LINACCEL
         bno055_opmode = BNO055_OPERATION_MODE_ACCONLY;
         bno_i2c_write(BNO055_OPR_MODE_ADDR, &bno055_opmode , 1);    // Enter data fusion mode
         __delay_cycles(114000);                                      // Valid delay for 8 MHz clock to allow sensor to switch from CONFIG to NDOF mode (>7 ms)
-
+#else
+        bno055_opmode = BNO055_OPERATION_MODE_NDOF;
+        bno_i2c_write(BNO055_OPR_MODE_ADDR, &bno055_opmode , 1);    // Enter data fusion mode
+        __delay_cycles(114000);                                      // Valid delay for 8 MHz clock to allow sensor to switch from CONFIG to NDOF mode (>7 ms)
+#endif
         uint8_t bno055_accel_Settings = BNO055_ACCEL_UNIT_MG;
         bno_i2c_write(BNO055_UNIT_SEL_ADDR, &bno055_accel_Settings, 1);    // change to  milliG
         __delay_cycles(114000);                                      // Valid delay for 8 MHz clock to allow sensor to switch from CONFIG to NDOF mode (>7 ms)
